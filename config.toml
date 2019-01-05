@@ -1,0 +1,4 @@
+baseurl = "https://okazu-dm.github.io/"
+languageCode = "ja"
+title = "okazu-dm.github.io"
+theme = "hugo-lithium-theme"
