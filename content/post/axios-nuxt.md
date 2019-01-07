@@ -1,6 +1,6 @@
 +++
 date = "2019-01-07T22:21:33+09:00"
-title = "axios nuxt"
+title = "Nuxt.jsのaxios-moduleで頑張ったが敗北した話"
 
 +++
 
