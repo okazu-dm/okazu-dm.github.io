@@ -6,8 +6,120 @@
     <description>Recent content on okazu-dm.github.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ja</language>
-    <lastBuildDate>Sat, 15 Dec 2018 23:59:24 +0900</lastBuildDate>
+    <lastBuildDate>Mon, 07 Jan 2019 22:21:33 +0900</lastBuildDate>
     <atom:link href="https://okazu-dm.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>axios nuxt</title>
+      <link>https://okazu-dm.github.io/post/axios-nuxt/</link>
+      <pubDate>Mon, 07 Jan 2019 22:21:33 +0900</pubDate>
+      
+      <guid>https://okazu-dm.github.io/post/axios-nuxt/</guid>
+      <description>
+
+&lt;h1 id=&#34;やりたかったこと&#34;&gt;やりたかったこと&lt;/h1&gt;
+
+&lt;p&gt;一部のホストとかにだけ別の設定をしたaxios-module(&lt;code&gt;Secure and Easy Axios integration with Nuxt.js&lt;/code&gt; らしい)のインスタンスを用意したいという話
+そして(少なくともスマートなやり方では)できなかったという話&lt;/p&gt;
+
+&lt;h2 id=&#34;例&#34;&gt;例&lt;/h2&gt;
+
+&lt;p&gt;例えば、以下のようなNuxt.jsのプラグインがあったとする ( &lt;a href=&#34;https://axios.nuxtjs.org/extend&#34;&gt;https://axios.nuxtjs.org/extend&lt;/a&gt; より引用 )&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;export default function ({ $axios, redirect }) {
+  $axios.onRequest(config =&amp;gt; {
+    console.log(&#39;Making request to &#39; + config.url)
+  })
+​
+  $axios.onError(error =&amp;gt; {
+    const code = parseInt(error.response &amp;amp;&amp;amp; error.response.status)
+    if (code === 400) {
+      redirect(&#39;/400&#39;)
+    }
+  })
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;これは、エラーコードが400ならエラーページに飛ばす、という処理である(と思われる)
+で、これが例えば &lt;code&gt;/api/&lt;/code&gt; 以下に対してはやってほしいが、 &lt;code&gt;/health&lt;/code&gt; とかに対してはやってほしくない、みたいなことがある(かもしれない)
+そんな時に、プラグインの中で処理を分けるのではなく、別のインスタンスとして分けてしまえば管理が楽であろうというのが最初のモチベーション。
+ついでに、ホスト名のprefixとかも個別に設定できたりして便利&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;async fetchResource ({ $apiClient }) {
+  return await $apiClient.get(&#39;/api/foo&#39;)
+  // これが400 errorのときはredirectしてほしい
+}
+
+async healthCheck ({ $healthCheckClient }) {
+  return await $healthCheckClient.get(&#39;/&#39;)
+  // これがerrorでもredirectまではしてほしくない
+  // そもそもこれで /health にリクエスト飛ぶような設定がしたい
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h1 id=&#34;なぜできなかったのか&#34;&gt;なぜできなかったのか&lt;/h1&gt;
+
+&lt;p&gt;結論としては、axios-moduleのインスタンスに生えている関数の &lt;code&gt;this&lt;/code&gt; はdeepCloneしてもオリジナルのインスタンスを指すようになっていたから&lt;/p&gt;
+
+&lt;h2 id=&#34;現象&#34;&gt;現象&lt;/h2&gt;
+
+&lt;p&gt;まず、pluginで $axios をdeepCopyしてみた(lodashのcloneDeepを利用)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import cloneDeep from &#39;lodash.clonedeep&#39;
+
+export default function ({ $axios }, inject) {
+const newClient = cloneDeep($axios)
+newClient.onRequest..... //みたいな感じで処理を挟んで
+
+inject(&#39;newClient&#39;, newClient) // これでcontext.app.$newClient が生える
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;ということをやっていたのだが、 &lt;code&gt;newClient.onRequest&lt;/code&gt; の処理結果が想定と違っていた。
+この処理はaxios-module内から始まっている。
+&lt;a href=&#34;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20&#34;&gt;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20&lt;/a&gt;
+このinterceptorsというのがaxios側で定義されている。
+&lt;a href=&#34;https://github.com/axios/axios/blob/master/lib/core/InterceptorManager.js#L17-L23&#34;&gt;https://github.com/axios/axios/blob/master/lib/core/InterceptorManager.js#L17-L23&lt;/a&gt;
+&lt;code&gt;this.handlers&lt;/code&gt; にonRequestで定義したフック処理が連なっていくのだが、この &lt;code&gt;this&lt;/code&gt; が &lt;code&gt;newClient&lt;/code&gt; ではなくもともとの &lt;code&gt;$axios&lt;/code&gt; を指しており変更できなさそうだということがわかった
+(実際console.logやらデバッガやらを使ってnewClientと$axiosのinterceptors.requestの中身を見ればわかる)&lt;/p&gt;
+
+&lt;h2 id=&#34;理由&#34;&gt;理由&lt;/h2&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;&lt;code&gt;this.handlers&lt;/code&gt; にonRequestで定義したフック処理が連なっていくのだが、この &lt;code&gt;this&lt;/code&gt; が &lt;code&gt;newClient&lt;/code&gt; ではなくもともとの &lt;code&gt;$axios&lt;/code&gt; を指しており変更できなさそうだということがわかった&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;と書いているが、仕組みとしては &lt;code&gt;onRequest&lt;/code&gt; 内の &lt;code&gt;this&lt;/code&gt; が外から変更できないということが原因になる。
+&lt;a href=&#34;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20&#34;&gt;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20&lt;/a&gt;
+この行の &lt;code&gt;this&lt;/code&gt; は以下の箇所の処理によってaxios-moduleのプラグインによって生成されたaxiosに束縛されている
+&lt;a href=&#34;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L42-L46&#34;&gt;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L42-L46&lt;/a&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const extendAxiosInstance = axios =&amp;gt; {
+  for (let key in axiosExtra) {
+    axios[key] = axiosExtra[key].bind(axios)
+  }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;この処理によって、axiosの外部であるaxios-moduleのプラグインで定義したメソッドをaxiosに生やしているのだが、今回やりたいことからすると困ったことになる。
+というのも(たまたま知らなかっただけだが)bindでthisを束縛しなおしたり、bindを解除してthisをundefinedに戻したりはできないらしい(rebindもunbindもない)
+&lt;a href=&#34;https://stackoverflow.com/questions/31656593/javascript-function-bind-override-how-to-bind-it-to-another-object&#34;&gt;https://stackoverflow.com/questions/31656593/javascript-function-bind-override-how-to-bind-it-to-another-object&lt;/a&gt;
+上のstack overflowの記事が端的に今回の困りポイントを表していて分かりやすい。(ES2015のspecは下)
+&lt;a href=&#34;http://www.ecma-international.org/ecma-262/6.0/index.html#sec-function.prototype.bind&#34;&gt;http://www.ecma-international.org/ecma-262/6.0/index.html#sec-function.prototype.bind&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2 id=&#34;一応考えられうるワークアラウンド-function-prototype-bind自体をunbind可能なものに置き換える&#34;&gt;(一応考えられうるワークアラウンド)Function.prototype.bind自体をunbind可能なものに置き換える&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://gist.github.com/cowboy/5373000&#34;&gt;https://gist.github.com/cowboy/5373000&lt;/a&gt;
+一応これで(おそらく)できるという話はあるが、かなりダーティハック感がある。&lt;/p&gt;
+
+&lt;h1 id=&#34;結論-このやり方はだめだがどうすればいいのかは検討中&#34;&gt;結論: このやり方はだめだがどうすればいいのかは検討中&lt;/h1&gt;
+
+&lt;ul&gt;
+&lt;li&gt;生axiosを使うか&lt;/li&gt;
+&lt;li&gt;axios-moduleを使ったまま onRequest内で条件分岐をするか&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
     
     <item>
       <title>1年SREやってみて</title>
