@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.18.1" />
+
+
+<title>1年SREやってみて - okazu-dm.github.io</title>
+<meta property="og:title" content="1年SREやってみて - okazu-dm.github.io">
+
+
+
+  
+
+
+
+
+
+
+<link rel="stylesheet" href="https://okazu-dm.github.io/css/main.css" media="all">
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="https://okazu-dm.github.io/" class="nav-logo">
+    <img src="https://okazu-dm.github.io/images/" 
+         width="" 
+         height="" 
+         alt="">
+  </a>
+
+  <ul class="nav-links">
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">1 min read</span>
+    
+
+    <h1 class="article-title">1年SREやってみて</h1>
+
+    
+    <span class="article-date">December 15, 2018</span>
+    
+
+    <div class="article-content">
+      
+
+<p>この記事は<a href="https://qiita.com/advent-calendar/2018/sre2">SRE 2 Advent Calendar 2018 - Qiita</a>の15日目の記事です。</p>
+
+<p>1年間SREチームという看板で仕事をしてきたいろいろな感想を文章を書くリハビリがてら書いていきます</p>
+
+<h1 id="おことわり">おことわり</h1>
+
+<p>あくまで感想を文章として一度書いてみたという投稿ですので役に立つプラクティスとかは書いていません。</p>
+
+<h1 id="なにやってるの">なにやってるの</h1>
+
+<p>大まかには以下のようなことを最近はしています
+* パフォーマンスチューニング
+* モニタリング
+* インフラ構成見直し
+* CI環境整備
+* 開発環境整備
+* 日々の運用のお手伝い</p>
+
+<p>アプリケーションに関してはドメインの知識が豊富な各チームのメンバーに、インフラに関してはインフラチームに相談しつつ進めることになるので、結果としてチームとチームの橋渡し的な感じのことをやることもあります。</p>
+
+<p>少し前のLTですが概要はそんなに今も変わってません。</p>
+
+<p><a href="https://speakerdeck.com/okazu/guo-qu-falsefu-zhai-tozhan-u-tekunitukubian">https://speakerdeck.com/okazu/guo-qu-falsefu-zhai-tozhan-u-tekunitukubian</a></p>
+
+<p>ポジション的にはこちらの投稿の一番下の図のような感じです。
+<a href="https://qiita.com/san-tak/items/1e8a6aae062c5f6c4c64">https://qiita.com/san-tak/items/1e8a6aae062c5f6c4c64</a></p>
+
+<p>最初に提唱されたSREとやっていることがかぶる部分もあれば、違う部分もありプラクティスについても実践していることや、実践しないという選択を行ったものもあり、そういったところについても今回とはまた別の機会に触れたいという話はあります。</p>
+
+<h1 id="ざっくり感想まとめ">ざっくり感想まとめ</h1>
+
+<p>サービス全体の改修をする裁量を与えられているので楽しいし成長にもつながる。
+一方でサービスのいたるところで起こる問題についてジャッジを下すことが必要なので立て込むと大変。</p>
+
+<h1 id="感想">感想</h1>
+
+<p>現在は、インフラとアプリケーションの両サイドに働きかけられるポジションで仕事をしているため、大きな問題を分解した時にインフラ側とアプリケーション側、それぞれから攻めることができます。
+例えばパフォーマンスチューニングに関してはアプリケーションコードのチューニングだけでなくそもそものパフォーマンスの計測方法や止む無くインスタンスタイプの変更(金の弾丸)なども検討します。</p>
+
+<p>パフォーマンス劣化など一つの問題を起点にして、サービスを取り巻く仕組みなども含めて広く検討できるため技術的な(あるいは技術以外も含めた)引き出しが1年前に比べて大きく広がったと感じます。(特にAWSのサービス全般)
+一方でシステム全体を見ることができる分問題が集中してSREの手が回りきらない時もあり、低コストでインパクトが大きい改善活動が求められているとも感じています(できているとは言っていない)</p>
+
+<h1 id="その他">その他</h1>
+
+<h2 id="困り事">困り事</h2>
+
+<p>本当は監視の改善や自動化、ライブラリの改修などに専念したいが実際には単純にサービス運用年数が経過するだけでも対処が必要な問題が起こり、過去の負債がシステムの成長を妨げることもありままならなかったりして難しい。
+そして日々の運用業務に対処するだけでも工数負荷がスパイクすると首が回らなくなることもありSREチームの工数がシステム運用のSPOFになることもあり申し訳無さが高まる時期もある。</p>
+
+<h2 id="今後">今後</h2>
+
+<p>上記のように、今SREチームが工数足りていないという話もあり、SRE以外もSREみたいなことやっていけるような会社になるといいなあ、と思ってまずは下記のようなところからやっていきたい気持ちがあります。</p>
+
+<ul>
+<li>お手伝いでやっているタスクの一部を開発チームに委譲していてSREが首が回らないときでも開発が停滞しないようにする</li>
+<li>SLIの計測精度を上げる(まだまだ粒度が粗いため不要なアラートなども上がりがち)</li>
+<li>インシデント対応の文化を根付かせたい。特に振り返りを通じた知見の蓄積(いわゆるポストモーテム?)</li>
+</ul>
+
+<p>こんな感じのことをやって半年後とか一年後にまたブログとかLTでご報告できたら嬉しいなあ、という気持ちでやっていきます。他社で似たようなお仕事されてる方がどういう気持ちでお仕事されてるのかとか興味あるのでそういうブログとか発表とかお待ちしております。</p>
+
+    </div>
+  </article>
+
+  
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="https://okazu-dm.github.io/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="https://okazu-dm.github.io/images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+
+    
+  </body>
+</html>
+

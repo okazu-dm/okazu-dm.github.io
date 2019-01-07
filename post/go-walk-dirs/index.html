@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Hugo 0.16-DEV" />
+<meta name="generator" content="Hugo 0.18.1" />
 
 
 <title>Goでディレクトリを列挙する - okazu-dm.github.io</title>
@@ -57,12 +57,12 @@
     <div class="article-content">
       
 
-<h1 id="概要:af4eb556fade8f3dff71a2ed5c338b32">概要</h1>
+<h1 id="概要">概要</h1>
 
 <p>Hugoを使ってみたテストとして日頃のメモを公開
 goであるパスより下のディレクトリを列挙したい時にいくつかやり方がありそうだったという話</p>
 
-<h1 id="実装:af4eb556fade8f3dff71a2ed5c338b32">実装</h1>
+<h1 id="実装">実装</h1>
 
 <p>とりあえず2種類はありそうだった</p>
 
@@ -139,14 +139,14 @@ goであるパスより下のディレクトリを列挙したい時にいくつ
 </pre></div>
 
 
-<h1 id="比較:af4eb556fade8f3dff71a2ed5c338b32">比較</h1>
+<h1 id="比較">比較</h1>
 
 <p>walkFindDirsは <code>filepath.Walk()</code>, findDirsは<code>filepath.Glob()</code> を使っている。</p>
 
 <p>深さを指定しやすいのはGlobを使う方だが、Walkは無視するディレクトリの指定がしやすい
 (上のコードではGlobを使っている方の実装では特に無視するディレクトリを指定していない)</p>
 
-<h1 id="主にhugoの-感想:af4eb556fade8f3dff71a2ed5c338b32">(主にhugoの)感想</h1>
+<h1 id="主にhugoの-感想">(主にhugoの)感想</h1>
 
 <ul>
 <li>go久々に書いてみるかと思って色々練習しているがまあ標準ライブラリで済む処理を書いている間は思想の統一感があるように感じて書きやすい気がする</li>

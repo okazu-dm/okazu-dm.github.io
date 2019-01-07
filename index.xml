@@ -2,12 +2,83 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>okazu-dm.github.io</title>
-    <link>https://okazu-dm.github.io/</link>
+    <link>https://okazu-dm.github.io/index.xml</link>
     <description>Recent content on okazu-dm.github.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ja</language>
-    <lastBuildDate>Mon, 28 May 2018 00:00:48 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 15 Dec 2018 23:59:24 +0900</lastBuildDate>
     <atom:link href="https://okazu-dm.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>1年SREやってみて</title>
+      <link>https://okazu-dm.github.io/post/sre-advent-calendar-2018/</link>
+      <pubDate>Sat, 15 Dec 2018 23:59:24 +0900</pubDate>
+      
+      <guid>https://okazu-dm.github.io/post/sre-advent-calendar-2018/</guid>
+      <description>
+
+&lt;p&gt;この記事は&lt;a href=&#34;https://qiita.com/advent-calendar/2018/sre2&#34;&gt;SRE 2 Advent Calendar 2018 - Qiita&lt;/a&gt;の15日目の記事です。&lt;/p&gt;
+
+&lt;p&gt;1年間SREチームという看板で仕事をしてきたいろいろな感想を文章を書くリハビリがてら書いていきます&lt;/p&gt;
+
+&lt;h1 id=&#34;おことわり&#34;&gt;おことわり&lt;/h1&gt;
+
+&lt;p&gt;あくまで感想を文章として一度書いてみたという投稿ですので役に立つプラクティスとかは書いていません。&lt;/p&gt;
+
+&lt;h1 id=&#34;なにやってるの&#34;&gt;なにやってるの&lt;/h1&gt;
+
+&lt;p&gt;大まかには以下のようなことを最近はしています
+* パフォーマンスチューニング
+* モニタリング
+* インフラ構成見直し
+* CI環境整備
+* 開発環境整備
+* 日々の運用のお手伝い&lt;/p&gt;
+
+&lt;p&gt;アプリケーションに関してはドメインの知識が豊富な各チームのメンバーに、インフラに関してはインフラチームに相談しつつ進めることになるので、結果としてチームとチームの橋渡し的な感じのことをやることもあります。&lt;/p&gt;
+
+&lt;p&gt;少し前のLTですが概要はそんなに今も変わってません。&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&#34;https://speakerdeck.com/okazu/guo-qu-falsefu-zhai-tozhan-u-tekunitukubian&#34;&gt;https://speakerdeck.com/okazu/guo-qu-falsefu-zhai-tozhan-u-tekunitukubian&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;ポジション的にはこちらの投稿の一番下の図のような感じです。
+&lt;a href=&#34;https://qiita.com/san-tak/items/1e8a6aae062c5f6c4c64&#34;&gt;https://qiita.com/san-tak/items/1e8a6aae062c5f6c4c64&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;最初に提唱されたSREとやっていることがかぶる部分もあれば、違う部分もありプラクティスについても実践していることや、実践しないという選択を行ったものもあり、そういったところについても今回とはまた別の機会に触れたいという話はあります。&lt;/p&gt;
+
+&lt;h1 id=&#34;ざっくり感想まとめ&#34;&gt;ざっくり感想まとめ&lt;/h1&gt;
+
+&lt;p&gt;サービス全体の改修をする裁量を与えられているので楽しいし成長にもつながる。
+一方でサービスのいたるところで起こる問題についてジャッジを下すことが必要なので立て込むと大変。&lt;/p&gt;
+
+&lt;h1 id=&#34;感想&#34;&gt;感想&lt;/h1&gt;
+
+&lt;p&gt;現在は、インフラとアプリケーションの両サイドに働きかけられるポジションで仕事をしているため、大きな問題を分解した時にインフラ側とアプリケーション側、それぞれから攻めることができます。
+例えばパフォーマンスチューニングに関してはアプリケーションコードのチューニングだけでなくそもそものパフォーマンスの計測方法や止む無くインスタンスタイプの変更(金の弾丸)なども検討します。&lt;/p&gt;
+
+&lt;p&gt;パフォーマンス劣化など一つの問題を起点にして、サービスを取り巻く仕組みなども含めて広く検討できるため技術的な(あるいは技術以外も含めた)引き出しが1年前に比べて大きく広がったと感じます。(特にAWSのサービス全般)
+一方でシステム全体を見ることができる分問題が集中してSREの手が回りきらない時もあり、低コストでインパクトが大きい改善活動が求められているとも感じています(できているとは言っていない)&lt;/p&gt;
+
+&lt;h1 id=&#34;その他&#34;&gt;その他&lt;/h1&gt;
+
+&lt;h2 id=&#34;困り事&#34;&gt;困り事&lt;/h2&gt;
+
+&lt;p&gt;本当は監視の改善や自動化、ライブラリの改修などに専念したいが実際には単純にサービス運用年数が経過するだけでも対処が必要な問題が起こり、過去の負債がシステムの成長を妨げることもありままならなかったりして難しい。
+そして日々の運用業務に対処するだけでも工数負荷がスパイクすると首が回らなくなることもありSREチームの工数がシステム運用のSPOFになることもあり申し訳無さが高まる時期もある。&lt;/p&gt;
+
+&lt;h2 id=&#34;今後&#34;&gt;今後&lt;/h2&gt;
+
+&lt;p&gt;上記のように、今SREチームが工数足りていないという話もあり、SRE以外もSREみたいなことやっていけるような会社になるといいなあ、と思ってまずは下記のようなところからやっていきたい気持ちがあります。&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;お手伝いでやっているタスクの一部を開発チームに委譲していてSREが首が回らないときでも開発が停滞しないようにする&lt;/li&gt;
+&lt;li&gt;SLIの計測精度を上げる(まだまだ粒度が粗いため不要なアラートなども上がりがち)&lt;/li&gt;
+&lt;li&gt;インシデント対応の文化を根付かせたい。特に振り返りを通じた知見の蓄積(いわゆるポストモーテム?)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;こんな感じのことをやって半年後とか一年後にまたブログとかLTでご報告できたら嬉しいなあ、という気持ちでやっていきます。他社で似たようなお仕事されてる方がどういう気持ちでお仕事されてるのかとか興味あるのでそういうブログとか発表とかお待ちしております。&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Goでディレクトリを列挙する</title>
@@ -17,12 +88,12 @@
       <guid>https://okazu-dm.github.io/post/go-walk-dirs/</guid>
       <description>
 
-&lt;h1 id=&#34;概要:af4eb556fade8f3dff71a2ed5c338b32&#34;&gt;概要&lt;/h1&gt;
+&lt;h1 id=&#34;概要&#34;&gt;概要&lt;/h1&gt;
 
 &lt;p&gt;Hugoを使ってみたテストとして日頃のメモを公開
 goであるパスより下のディレクトリを列挙したい時にいくつかやり方がありそうだったという話&lt;/p&gt;
 
-&lt;h1 id=&#34;実装:af4eb556fade8f3dff71a2ed5c338b32&#34;&gt;実装&lt;/h1&gt;
+&lt;h1 id=&#34;実装&#34;&gt;実装&lt;/h1&gt;
 
 &lt;p&gt;とりあえず2種類はありそうだった&lt;/p&gt;
 
@@ -99,14 +170,14 @@ goであるパスより下のディレクトリを列挙したい時にいくつ
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h1 id=&#34;比較:af4eb556fade8f3dff71a2ed5c338b32&#34;&gt;比較&lt;/h1&gt;
+&lt;h1 id=&#34;比較&#34;&gt;比較&lt;/h1&gt;
 
 &lt;p&gt;walkFindDirsは &lt;code&gt;filepath.Walk()&lt;/code&gt;, findDirsは&lt;code&gt;filepath.Glob()&lt;/code&gt; を使っている。&lt;/p&gt;
 
 &lt;p&gt;深さを指定しやすいのはGlobを使う方だが、Walkは無視するディレクトリの指定がしやすい
 (上のコードではGlobを使っている方の実装では特に無視するディレクトリを指定していない)&lt;/p&gt;
 
-&lt;h1 id=&#34;主にhugoの-感想:af4eb556fade8f3dff71a2ed5c338b32&#34;&gt;(主にhugoの)感想&lt;/h1&gt;
+&lt;h1 id=&#34;主にhugoの-感想&#34;&gt;(主にhugoの)感想&lt;/h1&gt;
 
 &lt;ul&gt;
 &lt;li&gt;go久々に書いてみるかと思って色々練習しているがまあ標準ライブラリで済む処理を書いている間は思想の統一感があるように感じて書きやすい気がする&lt;/li&gt;
