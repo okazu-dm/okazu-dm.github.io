@@ -2,27 +2,27 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Posts on okazu-dm.github.io</title>
-    <link>http://replace-this-with-your-hugo-site.com/post/</link>
+    <link>https://okazu-dm.github.io/post/index.xml</link>
     <description>Recent content in Posts on okazu-dm.github.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ja</language>
     <lastBuildDate>Mon, 28 May 2018 00:00:48 +0900</lastBuildDate>
-    <atom:link href="http://replace-this-with-your-hugo-site.com/post/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="https://okazu-dm.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
       <title>Goでディレクトリを列挙する</title>
-      <link>http://replace-this-with-your-hugo-site.com/post/go-walk-dirs/</link>
+      <link>https://okazu-dm.github.io/post/go-walk-dirs/</link>
       <pubDate>Mon, 28 May 2018 00:00:48 +0900</pubDate>
       
-      <guid>http://replace-this-with-your-hugo-site.com/post/go-walk-dirs/</guid>
+      <guid>https://okazu-dm.github.io/post/go-walk-dirs/</guid>
       <description>
 
-&lt;h1 id=&#34;概要:af4eb556fade8f3dff71a2ed5c338b32&#34;&gt;概要&lt;/h1&gt;
+&lt;h1 id=&#34;概要&#34;&gt;概要&lt;/h1&gt;
 
 &lt;p&gt;Hugoを使ってみたテストとして日頃のメモを公開
 goであるパスより下のディレクトリを列挙したい時にいくつかやり方がありそうだったという話&lt;/p&gt;
 
-&lt;h1 id=&#34;実装:af4eb556fade8f3dff71a2ed5c338b32&#34;&gt;実装&lt;/h1&gt;
+&lt;h1 id=&#34;実装&#34;&gt;実装&lt;/h1&gt;
 
 &lt;p&gt;とりあえず2種類はありそうだった&lt;/p&gt;
 
@@ -99,14 +99,14 @@ goであるパスより下のディレクトリを列挙したい時にいくつ
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h1 id=&#34;比較:af4eb556fade8f3dff71a2ed5c338b32&#34;&gt;比較&lt;/h1&gt;
+&lt;h1 id=&#34;比較&#34;&gt;比較&lt;/h1&gt;
 
 &lt;p&gt;walkFindDirsは &lt;code&gt;filepath.Walk()&lt;/code&gt;, findDirsは&lt;code&gt;filepath.Glob()&lt;/code&gt; を使っている。&lt;/p&gt;
 
 &lt;p&gt;深さを指定しやすいのはGlobを使う方だが、Walkは無視するディレクトリの指定がしやすい
 (上のコードではGlobを使っている方の実装では特に無視するディレクトリを指定していない)&lt;/p&gt;
 
-&lt;h1 id=&#34;主にhugoの-感想:af4eb556fade8f3dff71a2ed5c338b32&#34;&gt;(主にhugoの)感想&lt;/h1&gt;
+&lt;h1 id=&#34;主にhugoの-感想&#34;&gt;(主にhugoの)感想&lt;/h1&gt;
 
 &lt;ul&gt;
 &lt;li&gt;go久々に書いてみるかと思って色々練習しているがまあ標準ライブラリで済む処理を書いている間は思想の統一感があるように感じて書きやすい気がする&lt;/li&gt;
