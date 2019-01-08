@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Hugo 0.18.1" />
+<meta name="generator" content="Hugo 0.40.1" />
 
 
 <title>Nuxt.jsのaxios-moduleで頑張ったが敗北した話 - okazu-dm.github.io</title>
@@ -18,6 +18,7 @@
 
 
 
+<link rel="icon" href="https://okazu-dm.github.io/images/" type="image/x-icon"/>
 <link rel="stylesheet" href="https://okazu-dm.github.io/css/main.css" media="all">
 <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
 
@@ -59,8 +60,9 @@
 
 <h1 id="やりたかったこと">やりたかったこと</h1>
 
-<p>一部のホストとかにだけ別の設定をしたaxios-module(<code>Secure and Easy Axios integration with Nuxt.js</code> らしい)のインスタンスを用意したいという話
-そして(少なくともスマートなやり方では)できなかったという話</p>
+<p>一部のホストとかにだけ別の設定をしたaxios-module(<code>Secure and Easy Axios integration with Nuxt.js</code> らしい)のインスタンスを用意したいという話</p>
+
+<p>そして(少なくともスマートなやり方では)できなかったという話</p>
 
 <h2 id="例">例</h2>
 
@@ -80,10 +82,13 @@
 }
 </code></pre>
 
-<p>これは、エラーコードが400ならエラーページに飛ばす、という処理である(と思われる)
-で、これが例えば <code>/api/</code> 以下に対してはやってほしいが、 <code>/health</code> とかに対してはやってほしくない、みたいなことがある(かもしれない)
-そんな時に、プラグインの中で処理を分けるのではなく、別のインスタンスとして分けてしまえば管理が楽であろうというのが最初のモチベーション。
-ついでに、ホスト名のprefixとかも個別に設定できたりして便利</p>
+<p>これは、エラーコードが400ならエラーページに飛ばす、という処理である(と思われる)</p>
+
+<p>で、これが例えば <code>/api/</code> 以下に対してはやってほしいが、 <code>/health</code> とかに対してはやってほしくない、みたいなことがある(かもしれない)</p>
+
+<p>そんな時に、プラグインの中で処理を分けるのではなく、別のインスタンスとして分けてしまえば管理が楽であろうというのが最初のモチベーション。</p>
+
+<p>ついでに、ホスト名のprefixとかも個別に設定できたりして便利</p>
 
 <pre><code class="language-javascript">async fetchResource ({ $apiClient }) {
   return await $apiClient.get('/api/foo')
@@ -115,12 +120,17 @@ inject('newClient', newClient) // これでcontext.app.$newClient が生える
 }
 </code></pre>
 
-<p>ということをやっていたのだが、 <code>newClient.onRequest</code> の処理結果が想定と違っていた。
-この処理はaxios-module内から始まっている。
-<a href="https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20">https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20</a>
-このinterceptorsというのがaxios側で定義されている。
-<a href="https://github.com/axios/axios/blob/master/lib/core/InterceptorManager.js#L17-L23">https://github.com/axios/axios/blob/master/lib/core/InterceptorManager.js#L17-L23</a>
-<code>this.handlers</code> にonRequestで定義したフック処理が連なっていくのだが、この <code>this</code> が <code>newClient</code> ではなくもともとの <code>$axios</code> を指しており変更できなさそうだということがわかった
+<p>ということをやっていたのだが、 <code>newClient.onRequest</code> の処理結果が想定と違っていた。</p>
+
+<p>この処理はaxios-module内から始まっている。</p>
+
+<p><a href="https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20">https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20</a></p>
+
+<p>このinterceptorsというのがaxios側で定義されている。</p>
+
+<p><a href="https://github.com/axios/axios/blob/master/lib/core/InterceptorManager.js#L17-L23">https://github.com/axios/axios/blob/master/lib/core/InterceptorManager.js#L17-L23</a></p>
+
+<p><code>this.handlers</code> にonRequestで定義したフック処理が連なっていくのだが、この <code>this</code> が <code>newClient</code> ではなくもともとの <code>$axios</code> を指しており変更できなさそうだということがわかった
 (実際console.logやらデバッガやらを使ってnewClientと$axiosのinterceptors.requestの中身を見ればわかる)</p>
 
 <h2 id="理由">理由</h2>
@@ -129,10 +139,13 @@ inject('newClient', newClient) // これでcontext.app.$newClient が生える
 <p><code>this.handlers</code> にonRequestで定義したフック処理が連なっていくのだが、この <code>this</code> が <code>newClient</code> ではなくもともとの <code>$axios</code> を指しており変更できなさそうだということがわかった</p>
 </blockquote>
 
-<p>と書いているが、仕組みとしては <code>onRequest</code> 内の <code>this</code> が外から変更できないということが原因になる。
-<a href="https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20">https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20</a>
-この行の <code>this</code> は以下の箇所の処理によってaxios-moduleのプラグインによって生成されたaxiosに束縛されている
-<a href="https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L42-L46">https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L42-L46</a></p>
+<p>と書いているが、仕組みとしては <code>onRequest</code> 内の <code>this</code> が外から変更できないということが原因になる。</p>
+
+<p><a href="https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20">https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20</a></p>
+
+<p>この行の <code>this</code> は以下の箇所の処理によってaxios-moduleのプラグインによって生成されたaxiosに束縛されている</p>
+
+<p><a href="https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L42-L46">https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L42-L46</a></p>
 
 <pre><code class="language-javascript">const extendAxiosInstance = axios =&gt; {
   for (let key in axiosExtra) {
@@ -141,16 +154,21 @@ inject('newClient', newClient) // これでcontext.app.$newClient が生える
 }
 </code></pre>
 
-<p>この処理によって、axiosの外部であるaxios-moduleのプラグインで定義したメソッドをaxiosに生やしているのだが、今回やりたいことからすると困ったことになる。
-というのも(たまたま知らなかっただけだが)bindでthisを束縛しなおしたり、bindを解除してthisをundefinedに戻したりはできないらしい(rebindもunbindもない)
-<a href="https://stackoverflow.com/questions/31656593/javascript-function-bind-override-how-to-bind-it-to-another-object">https://stackoverflow.com/questions/31656593/javascript-function-bind-override-how-to-bind-it-to-another-object</a>
-上のstack overflowの記事が端的に今回の困りポイントを表していて分かりやすい。(ES2015のspecは下)
-<a href="http://www.ecma-international.org/ecma-262/6.0/index.html#sec-function.prototype.bind">http://www.ecma-international.org/ecma-262/6.0/index.html#sec-function.prototype.bind</a></p>
+<p>この処理によって、axiosの外部であるaxios-moduleのプラグインで定義したメソッドをaxiosに生やしているのだが、今回やりたいことからすると困ったことになる。</p>
+
+<p>というのも(たまたま知らなかっただけだが)bindでthisを束縛しなおしたり、bindを解除してthisをundefinedに戻したりはできないらしい(rebindもunbindもない)</p>
+
+<p><a href="https://stackoverflow.com/questions/31656593/javascript-function-bind-override-how-to-bind-it-to-another-object">https://stackoverflow.com/questions/31656593/javascript-function-bind-override-how-to-bind-it-to-another-object</a></p>
+
+<p>上のstack overflowの記事が端的に今回の困りポイントを表していて分かりやすい。(ES2015のspecは下)</p>
+
+<p><a href="http://www.ecma-international.org/ecma-262/6.0/index.html#sec-function.prototype.bind">http://www.ecma-international.org/ecma-262/6.0/index.html#sec-function.prototype.bind</a></p>
 
 <h2 id="一応考えられうるワークアラウンド-function-prototype-bind自体をunbind可能なものに置き換える">(一応考えられうるワークアラウンド)Function.prototype.bind自体をunbind可能なものに置き換える</h2>
 
-<p><a href="https://gist.github.com/cowboy/5373000">https://gist.github.com/cowboy/5373000</a>
-一応これで(おそらく)できるという話はあるが、かなりダーティハック感がある。</p>
+<p><a href="https://gist.github.com/cowboy/5373000">https://gist.github.com/cowboy/5373000</a></p>
+
+<p>一応これで(おそらく)できるという話はあるが、かなりダーティハック感がある。</p>
 
 <h1 id="結論-このやり方はだめだがどうすればいいのかは検討中">結論: このやり方はだめだがどうすればいいのかは検討中</h1>
 

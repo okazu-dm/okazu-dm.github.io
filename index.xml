@@ -2,12 +2,14 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>okazu-dm.github.io</title>
-    <link>https://okazu-dm.github.io/index.xml</link>
+    <link>https://okazu-dm.github.io/</link>
     <description>Recent content on okazu-dm.github.io</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>ja</language>
     <lastBuildDate>Mon, 07 Jan 2019 22:21:33 +0900</lastBuildDate>
-    <atom:link href="https://okazu-dm.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+	<atom:link href="https://okazu-dm.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
     
     <item>
       <title>Nuxt.jsのaxios-moduleで頑張ったが敗北した話</title>
@@ -15,110 +17,14 @@
       <pubDate>Mon, 07 Jan 2019 22:21:33 +0900</pubDate>
       
       <guid>https://okazu-dm.github.io/post/axios-nuxt/</guid>
-      <description>
-
-&lt;h1 id=&#34;やりたかったこと&#34;&gt;やりたかったこと&lt;/h1&gt;
-
-&lt;p&gt;一部のホストとかにだけ別の設定をしたaxios-module(&lt;code&gt;Secure and Easy Axios integration with Nuxt.js&lt;/code&gt; らしい)のインスタンスを用意したいという話
-そして(少なくともスマートなやり方では)できなかったという話&lt;/p&gt;
-
-&lt;h2 id=&#34;例&#34;&gt;例&lt;/h2&gt;
-
-&lt;p&gt;例えば、以下のようなNuxt.jsのプラグインがあったとする ( &lt;a href=&#34;https://axios.nuxtjs.org/extend&#34;&gt;https://axios.nuxtjs.org/extend&lt;/a&gt; より引用 )&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;export default function ({ $axios, redirect }) {
-  $axios.onRequest(config =&amp;gt; {
-    console.log(&#39;Making request to &#39; + config.url)
-  })
-​
-  $axios.onError(error =&amp;gt; {
-    const code = parseInt(error.response &amp;amp;&amp;amp; error.response.status)
-    if (code === 400) {
-      redirect(&#39;/400&#39;)
-    }
-  })
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;これは、エラーコードが400ならエラーページに飛ばす、という処理である(と思われる)
-で、これが例えば &lt;code&gt;/api/&lt;/code&gt; 以下に対してはやってほしいが、 &lt;code&gt;/health&lt;/code&gt; とかに対してはやってほしくない、みたいなことがある(かもしれない)
+      <description>やりたかったこと 一部のホストとかにだけ別の設定をしたaxios-module(Secure and Easy Axios integration with Nuxt.js らしい)のインスタンスを用意したいという話
+そして(少なくともスマートなやり方では)できなかったという話
+例 例えば、以下のようなNuxt.jsのプラグインがあったとする ( https://axios.nuxtjs.org/extend より引用 )
+export default function ({ $axios, redirect }) { $axios.onRequest(config =&amp;gt; { console.log(&#39;Making request to &#39; + config.url) }) ​ $axios.onError(error =&amp;gt; { const code = parseInt(error.response &amp;amp;&amp;amp; error.response.status) if (code === 400) { redirect(&#39;/400&#39;) } }) }  これは、エラーコードが400ならエラーページに飛ばす、という処理である(と思われる)
+で、これが例えば /api/ 以下に対してはやってほしいが、 /health とかに対してはやってほしくない、みたいなことがある(かもしれない)
 そんな時に、プラグインの中で処理を分けるのではなく、別のインスタンスとして分けてしまえば管理が楽であろうというのが最初のモチベーション。
-ついでに、ホスト名のprefixとかも個別に設定できたりして便利&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;async fetchResource ({ $apiClient }) {
-  return await $apiClient.get(&#39;/api/foo&#39;)
-  // これが400 errorのときはredirectしてほしい
-}
-
-async healthCheck ({ $healthCheckClient }) {
-  return await $healthCheckClient.get(&#39;/&#39;)
-  // これがerrorでもredirectまではしてほしくない
-  // そもそもこれで /health にリクエスト飛ぶような設定がしたい
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;h1 id=&#34;なぜできなかったのか&#34;&gt;なぜできなかったのか&lt;/h1&gt;
-
-&lt;p&gt;結論としては、axios-moduleのインスタンスに生えている関数の &lt;code&gt;this&lt;/code&gt; はdeepCloneしてもオリジナルのインスタンスを指すようになっていたから&lt;/p&gt;
-
-&lt;h2 id=&#34;現象&#34;&gt;現象&lt;/h2&gt;
-
-&lt;p&gt;まず、pluginで $axios をdeepCopyしてみた(lodashのcloneDeepを利用)&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;import cloneDeep from &#39;lodash.clonedeep&#39;
-
-export default function ({ $axios }, inject) {
-const newClient = cloneDeep($axios)
-newClient.onRequest..... //みたいな感じで処理を挟んで
-
-inject(&#39;newClient&#39;, newClient) // これでcontext.app.$newClient が生える
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;ということをやっていたのだが、 &lt;code&gt;newClient.onRequest&lt;/code&gt; の処理結果が想定と違っていた。
-この処理はaxios-module内から始まっている。
-&lt;a href=&#34;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20&#34;&gt;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20&lt;/a&gt;
-このinterceptorsというのがaxios側で定義されている。
-&lt;a href=&#34;https://github.com/axios/axios/blob/master/lib/core/InterceptorManager.js#L17-L23&#34;&gt;https://github.com/axios/axios/blob/master/lib/core/InterceptorManager.js#L17-L23&lt;/a&gt;
-&lt;code&gt;this.handlers&lt;/code&gt; にonRequestで定義したフック処理が連なっていくのだが、この &lt;code&gt;this&lt;/code&gt; が &lt;code&gt;newClient&lt;/code&gt; ではなくもともとの &lt;code&gt;$axios&lt;/code&gt; を指しており変更できなさそうだということがわかった
-(実際console.logやらデバッガやらを使ってnewClientと$axiosのinterceptors.requestの中身を見ればわかる)&lt;/p&gt;
-
-&lt;h2 id=&#34;理由&#34;&gt;理由&lt;/h2&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;&lt;code&gt;this.handlers&lt;/code&gt; にonRequestで定義したフック処理が連なっていくのだが、この &lt;code&gt;this&lt;/code&gt; が &lt;code&gt;newClient&lt;/code&gt; ではなくもともとの &lt;code&gt;$axios&lt;/code&gt; を指しており変更できなさそうだということがわかった&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;と書いているが、仕組みとしては &lt;code&gt;onRequest&lt;/code&gt; 内の &lt;code&gt;this&lt;/code&gt; が外から変更できないということが原因になる。
-&lt;a href=&#34;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20&#34;&gt;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L20&lt;/a&gt;
-この行の &lt;code&gt;this&lt;/code&gt; は以下の箇所の処理によってaxios-moduleのプラグインによって生成されたaxiosに束縛されている
-&lt;a href=&#34;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L42-L46&#34;&gt;https://github.com/nuxt-community/axios-module/blob/dev/lib/plugin.template.js#L42-L46&lt;/a&gt;&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-javascript&#34;&gt;const extendAxiosInstance = axios =&amp;gt; {
-  for (let key in axiosExtra) {
-    axios[key] = axiosExtra[key].bind(axios)
-  }
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;この処理によって、axiosの外部であるaxios-moduleのプラグインで定義したメソッドをaxiosに生やしているのだが、今回やりたいことからすると困ったことになる。
-というのも(たまたま知らなかっただけだが)bindでthisを束縛しなおしたり、bindを解除してthisをundefinedに戻したりはできないらしい(rebindもunbindもない)
-&lt;a href=&#34;https://stackoverflow.com/questions/31656593/javascript-function-bind-override-how-to-bind-it-to-another-object&#34;&gt;https://stackoverflow.com/questions/31656593/javascript-function-bind-override-how-to-bind-it-to-another-object&lt;/a&gt;
-上のstack overflowの記事が端的に今回の困りポイントを表していて分かりやすい。(ES2015のspecは下)
-&lt;a href=&#34;http://www.ecma-international.org/ecma-262/6.0/index.html#sec-function.prototype.bind&#34;&gt;http://www.ecma-international.org/ecma-262/6.0/index.html#sec-function.prototype.bind&lt;/a&gt;&lt;/p&gt;
-
-&lt;h2 id=&#34;一応考えられうるワークアラウンド-function-prototype-bind自体をunbind可能なものに置き換える&#34;&gt;(一応考えられうるワークアラウンド)Function.prototype.bind自体をunbind可能なものに置き換える&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://gist.github.com/cowboy/5373000&#34;&gt;https://gist.github.com/cowboy/5373000&lt;/a&gt;
-一応これで(おそらく)できるという話はあるが、かなりダーティハック感がある。&lt;/p&gt;
-
-&lt;h1 id=&#34;結論-このやり方はだめだがどうすればいいのかは検討中&#34;&gt;結論: このやり方はだめだがどうすればいいのかは検討中&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;生axiosを使うか&lt;/li&gt;
-&lt;li&gt;axios-moduleを使ったまま onRequest内で条件分岐をするか&lt;/li&gt;
-&lt;/ul&gt;
-</description>
+ついでに、ホスト名のprefixとかも個別に設定できたりして便利
+async fetchResource ({ $apiClient }) { return await $apiClient.</description>
     </item>
     
     <item>
@@ -127,69 +33,25 @@ inject(&#39;newClient&#39;, newClient) // これでcontext.app.$newClient が生
       <pubDate>Sat, 15 Dec 2018 23:59:24 +0900</pubDate>
       
       <guid>https://okazu-dm.github.io/post/sre-advent-calendar-2018/</guid>
-      <description>
-
-&lt;p&gt;この記事は&lt;a href=&#34;https://qiita.com/advent-calendar/2018/sre2&#34;&gt;SRE 2 Advent Calendar 2018 - Qiita&lt;/a&gt;の15日目の記事です。&lt;/p&gt;
-
-&lt;p&gt;1年間SREチームという看板で仕事をしてきたいろいろな感想を文章を書くリハビリがてら書いていきます&lt;/p&gt;
-
-&lt;h1 id=&#34;おことわり&#34;&gt;おことわり&lt;/h1&gt;
-
-&lt;p&gt;あくまで感想を文章として一度書いてみたという投稿ですので役に立つプラクティスとかは書いていません。&lt;/p&gt;
-
-&lt;h1 id=&#34;なにやってるの&#34;&gt;なにやってるの&lt;/h1&gt;
-
-&lt;p&gt;大まかには以下のようなことを最近はしています
-* パフォーマンスチューニング
-* モニタリング
-* インフラ構成見直し
-* CI環境整備
-* 開発環境整備
-* 日々の運用のお手伝い&lt;/p&gt;
-
-&lt;p&gt;アプリケーションに関してはドメインの知識が豊富な各チームのメンバーに、インフラに関してはインフラチームに相談しつつ進めることになるので、結果としてチームとチームの橋渡し的な感じのことをやることもあります。&lt;/p&gt;
-
-&lt;p&gt;少し前のLTですが概要はそんなに今も変わってません。&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://speakerdeck.com/okazu/guo-qu-falsefu-zhai-tozhan-u-tekunitukubian&#34;&gt;https://speakerdeck.com/okazu/guo-qu-falsefu-zhai-tozhan-u-tekunitukubian&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;ポジション的にはこちらの投稿の一番下の図のような感じです。
-&lt;a href=&#34;https://qiita.com/san-tak/items/1e8a6aae062c5f6c4c64&#34;&gt;https://qiita.com/san-tak/items/1e8a6aae062c5f6c4c64&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;最初に提唱されたSREとやっていることがかぶる部分もあれば、違う部分もありプラクティスについても実践していることや、実践しないという選択を行ったものもあり、そういったところについても今回とはまた別の機会に触れたいという話はあります。&lt;/p&gt;
-
-&lt;h1 id=&#34;ざっくり感想まとめ&#34;&gt;ざっくり感想まとめ&lt;/h1&gt;
-
-&lt;p&gt;サービス全体の改修をする裁量を与えられているので楽しいし成長にもつながる。
-一方でサービスのいたるところで起こる問題についてジャッジを下すことが必要なので立て込むと大変。&lt;/p&gt;
-
-&lt;h1 id=&#34;感想&#34;&gt;感想&lt;/h1&gt;
-
-&lt;p&gt;現在は、インフラとアプリケーションの両サイドに働きかけられるポジションで仕事をしているため、大きな問題を分解した時にインフラ側とアプリケーション側、それぞれから攻めることができます。
-例えばパフォーマンスチューニングに関してはアプリケーションコードのチューニングだけでなくそもそものパフォーマンスの計測方法や止む無くインスタンスタイプの変更(金の弾丸)なども検討します。&lt;/p&gt;
-
-&lt;p&gt;パフォーマンス劣化など一つの問題を起点にして、サービスを取り巻く仕組みなども含めて広く検討できるため技術的な(あるいは技術以外も含めた)引き出しが1年前に比べて大きく広がったと感じます。(特にAWSのサービス全般)
-一方でシステム全体を見ることができる分問題が集中してSREの手が回りきらない時もあり、低コストでインパクトが大きい改善活動が求められているとも感じています(できているとは言っていない)&lt;/p&gt;
-
-&lt;h1 id=&#34;その他&#34;&gt;その他&lt;/h1&gt;
-
-&lt;h2 id=&#34;困り事&#34;&gt;困り事&lt;/h2&gt;
-
-&lt;p&gt;本当は監視の改善や自動化、ライブラリの改修などに専念したいが実際には単純にサービス運用年数が経過するだけでも対処が必要な問題が起こり、過去の負債がシステムの成長を妨げることもありままならなかったりして難しい。
-そして日々の運用業務に対処するだけでも工数負荷がスパイクすると首が回らなくなることもありSREチームの工数がシステム運用のSPOFになることもあり申し訳無さが高まる時期もある。&lt;/p&gt;
-
-&lt;h2 id=&#34;今後&#34;&gt;今後&lt;/h2&gt;
-
-&lt;p&gt;上記のように、今SREチームが工数足りていないという話もあり、SRE以外もSREみたいなことやっていけるような会社になるといいなあ、と思ってまずは下記のようなところからやっていきたい気持ちがあります。&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;お手伝いでやっているタスクの一部を開発チームに委譲していてSREが首が回らないときでも開発が停滞しないようにする&lt;/li&gt;
-&lt;li&gt;SLIの計測精度を上げる(まだまだ粒度が粗いため不要なアラートなども上がりがち)&lt;/li&gt;
-&lt;li&gt;インシデント対応の文化を根付かせたい。特に振り返りを通じた知見の蓄積(いわゆるポストモーテム?)&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;こんな感じのことをやって半年後とか一年後にまたブログとかLTでご報告できたら嬉しいなあ、という気持ちでやっていきます。他社で似たようなお仕事されてる方がどういう気持ちでお仕事されてるのかとか興味あるのでそういうブログとか発表とかお待ちしております。&lt;/p&gt;
-</description>
+      <description>この記事はSRE 2 Advent Calendar 2018 - Qiitaの15日目の記事です。
+1年間SREチームという看板で仕事をしてきたいろいろな感想を文章を書くリハビリがてら書いていきます
+おことわり あくまで感想を文章として一度書いてみたという投稿ですので役に立つプラクティスとかは書いていません。
+なにやってるの 大まかには以下のようなことを最近はしています * パフォーマンスチューニング * モニタリング * インフラ構成見直し * CI環境整備 * 開発環境整備 * 日々の運用のお手伝い
+アプリケーションに関してはドメインの知識が豊富な各チームのメンバーに、インフラに関してはインフラチームに相談しつつ進めることになるので、結果としてチームとチームの橋渡し的な感じのことをやることもあります。
+少し前のLTですが概要はそんなに今も変わってません。
+https://speakerdeck.com/okazu/guo-qu-falsefu-zhai-tozhan-u-tekunitukubian
+ポジション的にはこちらの投稿の一番下の図のような感じです。 https://qiita.com/san-tak/items/1e8a6aae062c5f6c4c64
+最初に提唱されたSREとやっていることがかぶる部分もあれば、違う部分もありプラクティスについても実践していることや、実践しないという選択を行ったものもあり、そういったところについても今回とはまた別の機会に触れたいという話はあります。
+ざっくり感想まとめ サービス全体の改修をする裁量を与えられているので楽しいし成長にもつながる。
+一方でサービスのいたるところで起こる問題についてジャッジを下すことが必要なので立て込むと大変。
+感想 現在は、インフラとアプリケーションの両サイドに働きかけられるポジションで仕事をしているため、大きな問題を分解した時にインフラ側とアプリケーション側、それぞれから攻めることができます。
+例えばパフォーマンスチューニングに関してはアプリケーションコードのチューニングだけでなくそもそものパフォーマンスの計測方法や止む無くインスタンスタイプの変更(金の弾丸)なども検討します。
+パフォーマンス劣化など一つの問題を起点にして、サービスを取り巻く仕組みなども含めて広く検討できるため技術的な(あるいは技術以外も含めた)引き出しが1年前に比べて大きく広がったと感じます。(特にAWSのサービス全般)
+一方でシステム全体を見ることができる分問題が集中してSREの手が回りきらない時もあり、低コストでインパクトが大きい改善活動が求められているとも感じています(できているとは言っていない)
+その他 困り事 本当は監視の改善や自動化、ライブラリの改修などに専念したいが実際には単純にサービス運用年数が経過するだけでも対処が必要な問題が起こり、過去の負債がシステムの成長を妨げることもありままならなかったりして難しい。
+そして日々の運用業務に対処するだけでも工数負荷がスパイクすると首が回らなくなることもありSREチームの工数がシステム運用のSPOFになることもあり申し訳無さが高まる時期もある。
+今後 上記のように、今SREチームが工数足りていないという話もあり、SRE以外もSREみたいなことやっていけるような会社になるといいなあ、と思ってまずは下記のようなところからやっていきたい気持ちがあります。
+ お手伝いでやっているタスクの一部を開発チームに委譲していてSREが首が回らないときでも開発が停滞しないようにする SLIの計測精度を上げる(まだまだ粒度が粗いため不要なアラートなども上がりがち) インシデント対応の文化を根付かせたい。特に振り返りを通じた知見の蓄積(いわゆるポストモーテム?)  こんな感じのことをやって半年後とか一年後にまたブログとかLTでご報告できたら嬉しいなあ、という気持ちでやっていきます。他社で似たようなお仕事されてる方がどういう気持ちでお仕事されてるのかとか興味あるのでそういうブログとか発表とかお待ちしております。</description>
     </item>
     
     <item>
@@ -198,111 +60,9 @@ inject(&#39;newClient&#39;, newClient) // これでcontext.app.$newClient が生
       <pubDate>Mon, 28 May 2018 00:00:48 +0900</pubDate>
       
       <guid>https://okazu-dm.github.io/post/go-walk-dirs/</guid>
-      <description>
-
-&lt;h1 id=&#34;概要&#34;&gt;概要&lt;/h1&gt;
-
-&lt;p&gt;Hugoを使ってみたテストとして日頃のメモを公開
-goであるパスより下のディレクトリを列挙したい時にいくつかやり方がありそうだったという話&lt;/p&gt;
-
-&lt;h1 id=&#34;実装&#34;&gt;実装&lt;/h1&gt;
-
-&lt;p&gt;とりあえず2種類はありそうだった&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span&gt;&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;package&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;main&lt;/span&gt;
-
-&lt;span style=&#34;color: #f92672&#34;&gt;import&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;
-    &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;fmt&amp;quot;&lt;/span&gt;
-    &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;os&amp;quot;&lt;/span&gt;
-    &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;path/filepath&amp;quot;&lt;/span&gt;
-    &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;strings&amp;quot;&lt;/span&gt;
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-
-&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;main&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-    &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;len(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;os&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Args&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;&amp;lt;&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;2&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-        &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Println&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;arg error. please specify path&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-        &lt;span style=&#34;color: #a6e22e&#34;&gt;os&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Exit&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-    &lt;span style=&#34;color: #a6e22e&#34;&gt;basepath&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;os&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Args&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;]&lt;/span&gt;
-    &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Println&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;children ----&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-    &lt;span style=&#34;color: #75715e&#34;&gt;// findDirs(basepath, 2)&lt;/span&gt;
-    &lt;span style=&#34;color: #a6e22e&#34;&gt;walkFindDirs&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;basepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;2&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-
-&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;walkFindDirs&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;basepath&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;string&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;depth&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-    &lt;span style=&#34;color: #a6e22e&#34;&gt;filepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Walk&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;basepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;path&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;string&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;info&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;os&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;FileInfo&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;error&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;error&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-        &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-            &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;os&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;IsPermission&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-                &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;filepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;SkipDir&lt;/span&gt;
-            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-            &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Printf&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;err: %v\n&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-            &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt;
-        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-        &lt;span style=&#34;color: #a6e22e&#34;&gt;ftype&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;F&amp;quot;&lt;/span&gt;
-        &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;info&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;IsDir&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-            &lt;span style=&#34;color: #a6e22e&#34;&gt;ftype&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;D&amp;quot;&lt;/span&gt;
-            &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;info&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Name&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;.git&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-                &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;filepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;SkipDir&lt;/span&gt;
-            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-        &lt;span style=&#34;color: #a6e22e&#34;&gt;relpath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;filepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Rel&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;basepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;path&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-        &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-            &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Printf&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;err: %v\n&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-            &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt;
-        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-        &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;strings&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Count&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;relpath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;string(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;filepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Separator&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;))&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;depth&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-            &lt;span style=&#34;color: #75715e&#34;&gt;// dig limited dpeth&lt;/span&gt;
-            &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;filepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;SkipDir&lt;/span&gt;
-        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-        &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Printf&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;%s: %s\n&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;ftype&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;path&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-        &lt;span style=&#34;color: #66d9ef&#34;&gt;return&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt;
-    &lt;span style=&#34;color: #f8f8f2&#34;&gt;})&lt;/span&gt;
-
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-
-&lt;span style=&#34;color: #66d9ef&#34;&gt;func&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;findDirs&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;basepath&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;wstring&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;depth&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;int&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-    &lt;span style=&#34;color: #66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;currentDepth&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;currentDepth&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;lt;=&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;depth&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;;&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;currentDepth&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;++&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-        &lt;span style=&#34;color: #a6e22e&#34;&gt;children&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;filepath&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Glob&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;basepath&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;strings&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Repeat&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;/*&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;currentDepth&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;))&lt;/span&gt;
-        &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-            &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Printf&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;err: %v\n&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-            &lt;span style=&#34;color: #a6e22e&#34;&gt;os&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Exit&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-        &lt;span style=&#34;color: #66d9ef&#34;&gt;for&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;_&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;child&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;range&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;children&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-            &lt;span style=&#34;color: #a6e22e&#34;&gt;fileinfo&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;:=&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;os&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Stat&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;child&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-            &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;!=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-                &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Printf&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;err: %v\n&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;err&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-                &lt;span style=&#34;color: #66d9ef&#34;&gt;continue&lt;/span&gt;
-            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-            &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;fileinfo&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;IsDir&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;()&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-                &lt;span style=&#34;color: #a6e22e&#34;&gt;fmt&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;Println&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #a6e22e&#34;&gt;child&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-            &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-        &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-    &lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;h1 id=&#34;比較&#34;&gt;比較&lt;/h1&gt;
-
-&lt;p&gt;walkFindDirsは &lt;code&gt;filepath.Walk()&lt;/code&gt;, findDirsは&lt;code&gt;filepath.Glob()&lt;/code&gt; を使っている。&lt;/p&gt;
-
-&lt;p&gt;深さを指定しやすいのはGlobを使う方だが、Walkは無視するディレクトリの指定がしやすい
-(上のコードではGlobを使っている方の実装では特に無視するディレクトリを指定していない)&lt;/p&gt;
-
-&lt;h1 id=&#34;主にhugoの-感想&#34;&gt;(主にhugoの)感想&lt;/h1&gt;
-
-&lt;ul&gt;
-&lt;li&gt;go久々に書いてみるかと思って色々練習しているがまあ標準ライブラリで済む処理を書いている間は思想の統一感があるように感じて書きやすい気がする&lt;/li&gt;
-&lt;li&gt;hugo、なんかテーマのテンプレがエラーを吐く気がするのでこの後よく見てみる(多分tomlのつもりでyamlを書いているとかそういう話)&lt;/li&gt;
-&lt;li&gt;そもそもブログとかを書くタイプではないのでこれから使うかわからないけど、まあブログサービスに乗っからない場合はhugoはかなり選択肢の上位に来ると思った
-
-&lt;ul&gt;
-&lt;li&gt;内容を書く以外の時間は、チュートリ読んでる時間が2割、テーマを選んでいる時間が3割、テンプレのエラー解決が5割(だいたい全部で45分くらい) =&amp;gt; 楽&lt;/li&gt;
-&lt;li&gt;なんかテンプレの中でもgoのtemplateを使えるっぽさ&lt;/li&gt;
-&lt;li&gt;ブログサービスとかと同じでテーマは(おそらく)スパっと切り替えられる&lt;/li&gt;
-&lt;/ul&gt;&lt;/li&gt;
-&lt;/ul&gt;
-</description>
+      <description>概要 Hugoを使ってみたテストとして日頃のメモを公開 goであるパスより下のディレクトリを列挙したい時にいくつかやり方がありそうだったという話
+実装 とりあえず2種類はありそうだった
+package main import ( &amp;#34;fmt&amp;#34; &amp;#34;os&amp;#34; &amp;#34;path/filepath&amp;#34; &amp;#34;strings&amp;#34; ) func main() { if len(os.Args) &amp;lt; 2 { fmt.Println(&amp;#34;arg error. please specify path&amp;#34;) os.Exit(1) } basepath := os.Args[1] fmt.Println(&amp;#34;children ----&amp;#34;) // findDirs(basepath, 2)  walkFindDirs(basepath, 2) } func walkFindDirs(basepath string, depth int) { filepath.Walk(basepath, func(path string, info os.FileInfo, err error) error { if err != nil { if os.IsPermission(err) { return filepath.SkipDir } fmt.Printf(&amp;#34;err: %v\n&amp;#34;, err) return nil } ftype := &amp;#34;F&amp;#34; if info.</description>
     </item>
     
   </channel>

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Hugo 0.18.1" />
+<meta name="generator" content="Hugo 0.40.1" />
 
 
 <title>Goでディレクトリを列挙する - okazu-dm.github.io</title>
@@ -18,6 +18,7 @@
 
 
 
+<link rel="icon" href="https://okazu-dm.github.io/images/" type="image/x-icon"/>
 <link rel="stylesheet" href="https://okazu-dm.github.io/css/main.css" media="all">
 <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Merriweather:400|Lato:400,400italic,700">
 
@@ -66,78 +67,76 @@ goであるパスより下のディレクトリを列挙したい時にいくつ
 
 <p>とりあえず2種類はありそうだった</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span></span><span style="color: #f92672">package</span> <span style="color: #a6e22e">main</span>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
 
-<span style="color: #f92672">import</span> <span style="color: #f8f8f2">(</span>
-    <span style="color: #e6db74">&quot;fmt&quot;</span>
-    <span style="color: #e6db74">&quot;os&quot;</span>
-    <span style="color: #e6db74">&quot;path/filepath&quot;</span>
-    <span style="color: #e6db74">&quot;strings&quot;</span>
-<span style="color: #f8f8f2">)</span>
+<span style="color:#f92672">import</span> (
+    <span style="color:#e6db74">&#34;fmt&#34;</span>
+    <span style="color:#e6db74">&#34;os&#34;</span>
+    <span style="color:#e6db74">&#34;path/filepath&#34;</span>
+    <span style="color:#e6db74">&#34;strings&#34;</span>
+)
 
-<span style="color: #66d9ef">func</span> <span style="color: #a6e22e">main</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">{</span>
-    <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">len(</span><span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">&lt;</span> <span style="color: #ae81ff">2</span> <span style="color: #f8f8f2">{</span>
-        <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Println</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;arg error. please specify path&quot;</span><span style="color: #f8f8f2">)</span>
-        <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Exit</span><span style="color: #f8f8f2">(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
-    <span style="color: #f8f8f2">}</span>
-    <span style="color: #a6e22e">basepath</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Args</span><span style="color: #f8f8f2">[</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">]</span>
-    <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Println</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;children ----&quot;</span><span style="color: #f8f8f2">)</span>
-    <span style="color: #75715e">// findDirs(basepath, 2)</span>
-    <span style="color: #a6e22e">walkFindDirs</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">basepath</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">2</span><span style="color: #f8f8f2">)</span>
-<span style="color: #f8f8f2">}</span>
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+    <span style="color:#66d9ef">if</span> len(<span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>) &lt; <span style="color:#ae81ff">2</span> {
+        <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;arg error. please specify path&#34;</span>)
+        <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Exit</span>(<span style="color:#ae81ff">1</span>)
+    }
+    <span style="color:#a6e22e">basepath</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Args</span>[<span style="color:#ae81ff">1</span>]
+    <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#e6db74">&#34;children ----&#34;</span>)
+    <span style="color:#75715e">// findDirs(basepath, 2)
+</span><span style="color:#75715e"></span>    <span style="color:#a6e22e">walkFindDirs</span>(<span style="color:#a6e22e">basepath</span>, <span style="color:#ae81ff">2</span>)
+}
 
-<span style="color: #66d9ef">func</span> <span style="color: #a6e22e">walkFindDirs</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">basepath</span> <span style="color: #66d9ef">string</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">depth</span> <span style="color: #66d9ef">int</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
-    <span style="color: #a6e22e">filepath</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Walk</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">basepath</span><span style="color: #f8f8f2">,</span> <span style="color: #66d9ef">func</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">path</span> <span style="color: #66d9ef">string</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">info</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">FileInfo</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #66d9ef">error</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">error</span> <span style="color: #f8f8f2">{</span>
-        <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
-            <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">IsPermission</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">err</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
-                <span style="color: #66d9ef">return</span> <span style="color: #a6e22e">filepath</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">SkipDir</span>
-            <span style="color: #f8f8f2">}</span>
-            <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Printf</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;err: %v\n&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span><span style="color: #f8f8f2">)</span>
-            <span style="color: #66d9ef">return</span> <span style="color: #66d9ef">nil</span>
-        <span style="color: #f8f8f2">}</span>
-        <span style="color: #a6e22e">ftype</span> <span style="color: #f92672">:=</span> <span style="color: #e6db74">&quot;F&quot;</span>
-        <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">info</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">IsDir</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">{</span>
-            <span style="color: #a6e22e">ftype</span> <span style="color: #f8f8f2">=</span> <span style="color: #e6db74">&quot;D&quot;</span>
-            <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">info</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Name</span><span style="color: #f8f8f2">()</span> <span style="color: #f92672">==</span> <span style="color: #e6db74">&quot;.git&quot;</span> <span style="color: #f8f8f2">{</span>
-                <span style="color: #66d9ef">return</span> <span style="color: #a6e22e">filepath</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">SkipDir</span>
-            <span style="color: #f8f8f2">}</span>
-        <span style="color: #f8f8f2">}</span>
-        <span style="color: #a6e22e">relpath</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">filepath</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Rel</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">basepath</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">path</span><span style="color: #f8f8f2">)</span>
-        <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
-            <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Printf</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;err: %v\n&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span><span style="color: #f8f8f2">)</span>
-            <span style="color: #66d9ef">return</span> <span style="color: #66d9ef">nil</span>
-        <span style="color: #f8f8f2">}</span>
-        <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">strings</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Count</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">relpath</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">string(</span><span style="color: #a6e22e">filepath</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Separator</span><span style="color: #f8f8f2">))</span> <span style="color: #f92672">==</span> <span style="color: #a6e22e">depth</span> <span style="color: #f8f8f2">{</span>
-            <span style="color: #75715e">// dig limited dpeth</span>
-            <span style="color: #66d9ef">return</span> <span style="color: #a6e22e">filepath</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">SkipDir</span>
-        <span style="color: #f8f8f2">}</span>
-        <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Printf</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;%s: %s\n&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">ftype</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">path</span><span style="color: #f8f8f2">)</span>
-        <span style="color: #66d9ef">return</span> <span style="color: #66d9ef">nil</span>
-    <span style="color: #f8f8f2">})</span>
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">walkFindDirs</span>(<span style="color:#a6e22e">basepath</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">depth</span> <span style="color:#66d9ef">int</span>) {
+    <span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">Walk</span>(<span style="color:#a6e22e">basepath</span>, <span style="color:#66d9ef">func</span>(<span style="color:#a6e22e">path</span> <span style="color:#66d9ef">string</span>, <span style="color:#a6e22e">info</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">FileInfo</span>, <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>) <span style="color:#66d9ef">error</span> {
+        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">IsPermission</span>(<span style="color:#a6e22e">err</span>) {
+                <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">SkipDir</span>
+            }
+            <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;err: %v\n&#34;</span>, <span style="color:#a6e22e">err</span>)
+            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+        }
+        <span style="color:#a6e22e">ftype</span> <span style="color:#f92672">:=</span> <span style="color:#e6db74">&#34;F&#34;</span>
+        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">info</span>.<span style="color:#a6e22e">IsDir</span>() {
+            <span style="color:#a6e22e">ftype</span> = <span style="color:#e6db74">&#34;D&#34;</span>
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">info</span>.<span style="color:#a6e22e">Name</span>() <span style="color:#f92672">==</span> <span style="color:#e6db74">&#34;.git&#34;</span> {
+                <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">SkipDir</span>
+            }
+        }
+        <span style="color:#a6e22e">relpath</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">Rel</span>(<span style="color:#a6e22e">basepath</span>, <span style="color:#a6e22e">path</span>)
+        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+            <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;err: %v\n&#34;</span>, <span style="color:#a6e22e">err</span>)
+            <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+        }
+        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">strings</span>.<span style="color:#a6e22e">Count</span>(<span style="color:#a6e22e">relpath</span>, string(<span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">Separator</span>)) <span style="color:#f92672">==</span> <span style="color:#a6e22e">depth</span> {
+            <span style="color:#75715e">// dig limited dpeth
+</span><span style="color:#75715e"></span>            <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">SkipDir</span>
+        }
+        <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;%s: %s\n&#34;</span>, <span style="color:#a6e22e">ftype</span>, <span style="color:#a6e22e">path</span>)
+        <span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+    })
 
-<span style="color: #f8f8f2">}</span>
+}
 
-<span style="color: #66d9ef">func</span> <span style="color: #a6e22e">findDirs</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">basepath</span> <span style="color: #a6e22e">wstring</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">depth</span> <span style="color: #66d9ef">int</span><span style="color: #f8f8f2">)</span> <span style="color: #f8f8f2">{</span>
-    <span style="color: #66d9ef">for</span> <span style="color: #a6e22e">currentDepth</span> <span style="color: #f92672">:=</span> <span style="color: #ae81ff">1</span><span style="color: #f8f8f2">;</span> <span style="color: #a6e22e">currentDepth</span> <span style="color: #f92672">&lt;=</span> <span style="color: #a6e22e">depth</span><span style="color: #f8f8f2">;</span> <span style="color: #a6e22e">currentDepth</span><span style="color: #f92672">++</span> <span style="color: #f8f8f2">{</span>
-        <span style="color: #a6e22e">children</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">filepath</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Glob</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">basepath</span> <span style="color: #f92672">+</span> <span style="color: #a6e22e">strings</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Repeat</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;/*&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">currentDepth</span><span style="color: #f8f8f2">))</span>
-        <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
-            <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Printf</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;err: %v\n&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span><span style="color: #f8f8f2">)</span>
-            <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Exit</span><span style="color: #f8f8f2">(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
-        <span style="color: #f8f8f2">}</span>
-        <span style="color: #66d9ef">for</span> <span style="color: #a6e22e">_</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">child</span> <span style="color: #f92672">:=</span> <span style="color: #66d9ef">range</span> <span style="color: #a6e22e">children</span> <span style="color: #f8f8f2">{</span>
-            <span style="color: #a6e22e">fileinfo</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">:=</span> <span style="color: #a6e22e">os</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Stat</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">child</span><span style="color: #f8f8f2">)</span>
-            <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">err</span> <span style="color: #f92672">!=</span> <span style="color: #66d9ef">nil</span> <span style="color: #f8f8f2">{</span>
-                <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Printf</span><span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;err: %v\n&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #a6e22e">err</span><span style="color: #f8f8f2">)</span>
-                <span style="color: #66d9ef">continue</span>
-            <span style="color: #f8f8f2">}</span>
-            <span style="color: #66d9ef">if</span> <span style="color: #a6e22e">fileinfo</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">IsDir</span><span style="color: #f8f8f2">()</span> <span style="color: #f8f8f2">{</span>
-                <span style="color: #a6e22e">fmt</span><span style="color: #f8f8f2">.</span><span style="color: #a6e22e">Println</span><span style="color: #f8f8f2">(</span><span style="color: #a6e22e">child</span><span style="color: #f8f8f2">)</span>
-            <span style="color: #f8f8f2">}</span>
-        <span style="color: #f8f8f2">}</span>
-    <span style="color: #f8f8f2">}</span>
-<span style="color: #f8f8f2">}</span>
-</pre></div>
-
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">findDirs</span>(<span style="color:#a6e22e">basepath</span> <span style="color:#a6e22e">wstring</span>, <span style="color:#a6e22e">depth</span> <span style="color:#66d9ef">int</span>) {
+    <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">currentDepth</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">1</span>; <span style="color:#a6e22e">currentDepth</span> <span style="color:#f92672">&lt;=</span> <span style="color:#a6e22e">depth</span>; <span style="color:#a6e22e">currentDepth</span><span style="color:#f92672">++</span> {
+        <span style="color:#a6e22e">children</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">filepath</span>.<span style="color:#a6e22e">Glob</span>(<span style="color:#a6e22e">basepath</span> <span style="color:#f92672">+</span> <span style="color:#a6e22e">strings</span>.<span style="color:#a6e22e">Repeat</span>(<span style="color:#e6db74">&#34;/*&#34;</span>, <span style="color:#a6e22e">currentDepth</span>))
+        <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+            <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;err: %v\n&#34;</span>, <span style="color:#a6e22e">err</span>)
+            <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Exit</span>(<span style="color:#ae81ff">1</span>)
+        }
+        <span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">child</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">children</span> {
+            <span style="color:#a6e22e">fileinfo</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Stat</span>(<span style="color:#a6e22e">child</span>)
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+                <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Printf</span>(<span style="color:#e6db74">&#34;err: %v\n&#34;</span>, <span style="color:#a6e22e">err</span>)
+                <span style="color:#66d9ef">continue</span>
+            }
+            <span style="color:#66d9ef">if</span> <span style="color:#a6e22e">fileinfo</span>.<span style="color:#a6e22e">IsDir</span>() {
+                <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">child</span>)
+            }
+        }
+    }
+}</code></pre></div>
 
 <h1 id="比較">比較</h1>
 
